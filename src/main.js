@@ -125,7 +125,7 @@ function createTray() {
 // IPC handlers
 ipcMain.on('set-mini-mode', (event, mini) => {
   isMiniMode = mini;
-  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().bounds;
 
   if (mini) {
     const [cx, cy] = mainWindow.getPosition();
@@ -153,7 +153,7 @@ ipcMain.handle('load-settings', () => {
 ipcMain.on('drag-move', (event, { dx, dy }) => {
   if (mainWindow) {
     const [x, y] = mainWindow.getPosition();
-    const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+    const { width: sw, height: sh } = screen.getPrimaryDisplay().bounds;
     const [w, h] = mainWindow.getSize();
     const nx = Math.max(0, Math.min(x + dx, sw - w));
     const ny = Math.max(0, Math.min(y + dy, sh - h));
