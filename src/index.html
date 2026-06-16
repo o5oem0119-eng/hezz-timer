@@ -125,6 +125,10 @@
     text-align: center;
     line-height: 1;
   }
+  #time-text-wrap:hover {
+    color: var(--accent2);
+    text-decoration: underline dashed 1.5px;
+  }
   #time-display small {
     display: block;
     font-size: 6px;
@@ -373,7 +377,10 @@
       <circle class="ring-fill" id="ring-fill" cx="80" cy="80" r="66"/>
     </svg>
     <div id="time-display">
-      <span id="mm">25</span>:<span id="ss">00</span>
+      <div id="time-text-wrap" style="cursor: pointer;" title="클릭해서 시간 입력">
+        <span id="mm">25</span>:<span id="ss">00</span>
+      </div>
+      <input id="time-direct-input" type="text" maxlength="3" placeholder="25" style="display:none; font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--text); background: transparent; border: none; outline: none; width: 90px; text-align: center; margin: 4px auto;">
       <small id="status-label">READY</small>
     </div>
   </div>
@@ -746,6 +753,55 @@ document.getElementById('timer-ring').addEventListener('wheel', (e) => {
   userSetSecs = remainSecs;
   updateDisplay();
 }, { passive: false });
+
+document.getElementById('time-text-wrap').addEventListener('click', (e) => {
+  if (running) return;
+  const wrap = document.getElementById('time-text-wrap');
+  const input = document.getElementById('time-direct-input');
+  wrap.style.display = 'none';
+  input.style.display = 'block';
+  input.value = Math.floor(remainSecs / 60);
+  input.focus();
+  input.select();
+});
+
+function finishDirectTimeInput() {
+  const wrap = document.getElementById('time-text-wrap');
+  const input = document.getElementById('time-direct-input');
+  if (input.style.display === 'none') return;
+  
+  let val = parseInt(input.value.trim(), 10);
+  if (isNaN(val)) {
+    val = Math.floor(remainSecs / 60);
+  }
+  const MAX = 120;
+  if (val > MAX) val = MAX;
+  if (val < 0) val = 0;
+  
+  remainSecs = val * 60;
+  totalSecs = remainSecs;
+  userSetSecs = remainSecs;
+  
+  input.style.display = 'none';
+  wrap.style.display = 'block';
+  updateDisplay();
+  saveState();
+}
+
+document.getElementById('time-direct-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    finishDirectTimeInput();
+  }
+  if (e.key === 'Escape') {
+    const wrap = document.getElementById('time-text-wrap');
+    const input = document.getElementById('time-direct-input');
+    input.style.display = 'none';
+    wrap.style.display = 'block';
+  }
+  e.stopPropagation();
+});
+
+document.getElementById('time-direct-input').addEventListener('blur', finishDirectTimeInput);
 
 // ── THEME ──
 document.getElementById('edit-btn').addEventListener('click', (e) => {
