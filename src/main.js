@@ -25,7 +25,7 @@ function saveSettings(data) {
 }
 
 const FULL_WIDTH = 280;
-const FULL_HEIGHT = 420;
+const FULL_HEIGHT = 350;
 const MINI_WIDTH = 120;
 const MINI_HEIGHT = 50;
 

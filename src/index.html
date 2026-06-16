@@ -34,7 +34,7 @@
   body {
     background: transparent;
     width: 280px;
-    height: 420px;
+    height: 350px;
     overflow: hidden;
     font-family: 'Galmuri11', 'Press Start 2P', monospace;
   }
@@ -42,7 +42,7 @@
   /* ── FULL MODE ── */
   #app {
     width: 280px;
-    height: 420px;
+    height: 350px;
     background: var(--bg);
     border: 2px solid var(--border);
     border-radius: 16px;
@@ -696,7 +696,7 @@ function setMiniMode(mini) {
   document.getElementById('app').style.display = mini ? 'none' : 'flex';
   document.getElementById('mini-app').style.display = mini ? 'flex' : 'none';
   document.body.style.width = mini ? '120px' : '280px';
-  document.body.style.height = mini ? '50px' : '420px';
+  document.body.style.height = mini ? '50px' : '350px';
   ipcRenderer.send('set-mini-mode', mini);
   if (mini && finished) startMiniFinish();
   if (!mini) { stopMiniFinish(); updateDisplay(); }
