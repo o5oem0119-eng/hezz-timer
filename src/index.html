@@ -275,6 +275,17 @@
     text-align: center;
     line-height: 1.8;
   }
+  #popup-emoji-dance {
+    font-size: 24px;
+    color: var(--accent2);
+    margin-bottom: 4px;
+    animation: emoji-dance 0.6s infinite alternate ease-in-out;
+    display: inline-block;
+  }
+  @keyframes emoji-dance {
+    0% { transform: translateY(0) rotate(-4deg); }
+    100% { transform: translateY(-10px) rotate(4deg); }
+  }
   #finish-popup .popup-btns {
     display: flex;
     gap: 8px;
@@ -284,7 +295,7 @@
   #mini-app {
     display: none;
     width: 80px;
-    height: 120px;
+    height: 80px;
     background: var(--mini-bg);
     border: 2px solid var(--accent2);
     border-radius: 12px;
@@ -375,6 +386,7 @@
   <div id="btn-row">
     <button class="ctrl-btn primary" id="btn-start">START</button>
     <button class="ctrl-btn" id="btn-pause" style="display:none;">PAUSE</button>
+    <button class="ctrl-btn" id="btn-reset">RESET</button>
     <button class="ctrl-btn" id="btn-rest">REST</button>
     <button class="ctrl-btn" id="btn-mini">MINI</button>
   </div>
@@ -402,6 +414,7 @@
   <!-- finish popup -->
   <div id="finish-popup">
     <div class="popup-box">
+      <div id="popup-emoji-dance">⸜( ᐢ ᵕ ᐢ )⸝</div>
       <div class="popup-title">⏰ 시간 종료!<br>목표를 달성했나요?</div>
       <div class="popup-btns">
         <button class="ctrl-btn primary" id="btn-done">✓ 완료</button>
@@ -426,6 +439,7 @@ const { ipcRenderer } = require('electron');
 // ── STATE ──
 let totalSecs = 25 * 60;
 let remainSecs = 25 * 60;
+let userSetSecs = 25 * 60; // 사용자가 마지막으로 드래그/휠로 설정해 둔 오리지널 시간
 let running = false;
 let resting = false;
 let finished = false;
@@ -439,6 +453,9 @@ let dragOriginRemain = null;
 let miniEmojiIdx = 0;
 let miniEmojiInterval = null;
 const MINI_EMOJIS = ['⸜( ᐢ ᵕ ᐢ )⸝', '⸜(  ᐢ ᵕ ᐢ   )⸝'];
+let popupEmojiIdx = 0;
+let popupEmojiInterval = null;
+const POPUP_EMOJIS = ['⸜( ᐢ ᵕ ᐢ )⸝', '\\( ᐢ ᵕ ᐢ )/'];
 
 // ── THEMES ──
 const THEMES = {
@@ -541,11 +558,13 @@ function pauseTimer() {
 function resetTimer() {
   clearInterval(interval);
   running = false; finished = false; resting = false;
-  remainSecs = totalSecs;
+  remainSecs = userSetSecs;
+  totalSecs = userSetSecs;
   document.getElementById('btn-start').style.display = '';
   document.getElementById('btn-pause').style.display = 'none';
   document.getElementById('ring-svg').classList.remove('ring-flash');
   stopMiniFinish();
+  stopPopupFinish();
   updateDisplay();
 }
 
@@ -555,8 +574,29 @@ function onFinish() {
   document.getElementById('btn-pause').style.display = 'none';
   if (!isMini) {
     document.getElementById('finish-popup').classList.add('open');
+    startPopupFinish();
   } else {
     startMiniFinish();
+  }
+}
+
+function startPopupFinish() {
+  const emojiEl = document.getElementById('popup-emoji-dance');
+  if (!emojiEl) return;
+  clearInterval(popupEmojiInterval);
+  popupEmojiIdx = 0;
+  emojiEl.textContent = POPUP_EMOJIS[0];
+  popupEmojiInterval = setInterval(() => {
+    popupEmojiIdx = (popupEmojiIdx + 1) % POPUP_EMOJIS.length;
+    emojiEl.textContent = POPUP_EMOJIS[popupEmojiIdx];
+  }, 400);
+}
+
+function stopPopupFinish() {
+  clearInterval(popupEmojiInterval);
+  const emojiEl = document.getElementById('popup-emoji-dance');
+  if (emojiEl) {
+    emojiEl.textContent = POPUP_EMOJIS[0];
   }
 }
 
@@ -591,6 +631,7 @@ function stopMiniFinish() {
 // ── BUTTONS ──
 document.getElementById('btn-start').addEventListener('click', startTimer);
 document.getElementById('btn-pause').addEventListener('click', pauseTimer);
+document.getElementById('btn-reset').addEventListener('click', resetTimer);
 
 document.getElementById('btn-rest').addEventListener('click', () => {
   if (!resting) {
@@ -618,6 +659,7 @@ document.getElementById('btn-done').addEventListener('click', () => {
 document.getElementById('btn-addtime').addEventListener('click', () => {
   document.getElementById('finish-popup').classList.remove('open');
   document.getElementById('ring-svg').classList.remove('ring-flash');
+  stopPopupFinish();
   finished = false;
   remainSecs = 5 * 60;
   totalSecs = Math.max(totalSecs, remainSecs);
@@ -631,7 +673,7 @@ function setMiniMode(mini) {
   document.getElementById('app').style.display = mini ? 'none' : 'flex';
   document.getElementById('mini-app').style.display = mini ? 'flex' : 'none';
   document.body.style.width = mini ? '80px' : '280px';
-  document.body.style.height = mini ? '120px' : '420px';
+  document.body.style.height = mini ? '80px' : '420px';
   ipcRenderer.send('set-mini-mode', mini);
   if (mini && finished) startMiniFinish();
   if (!mini) { stopMiniFinish(); updateDisplay(); }
@@ -639,11 +681,13 @@ function setMiniMode(mini) {
 }
 
 document.getElementById('mini-app').addEventListener('click', () => {
+  if (miniClickPrevented) return;
   stopMiniFinish();
   setMiniMode(false);
   if (finished) {
     document.getElementById('finish-popup').classList.add('open');
     document.getElementById('ring-svg').classList.add('ring-flash');
+    startPopupFinish();
   }
 });
 
@@ -683,6 +727,7 @@ document.addEventListener('mousemove', (e) => {
   if (newSecs < 0) newSecs = 0;
   remainSecs = newSecs;
   totalSecs = newSecs;
+  userSetSecs = newSecs;
   updateDisplay();
 });
 
@@ -697,6 +742,7 @@ document.getElementById('timer-ring').addEventListener('wheel', (e) => {
   const MAX = 120 * 60;
   remainSecs = Math.max(0, Math.min(MAX, remainSecs + delta));
   totalSecs = remainSecs;
+  userSetSecs = remainSecs;
   updateDisplay();
 }, { passive: false });
 
@@ -763,6 +809,9 @@ document.getElementById('name-input').addEventListener('blur', finishNameEdit);
 // ── DRAG WINDOW ──
 let winDragActive = false;
 let winDragLast = null;
+let miniClickPrevented = false;
+let dragStartX = 0;
+let dragStartY = 0;
 
 document.getElementById('app').addEventListener('mousedown', (e) => {
   // Only drag on app background, not on interactive elements
@@ -773,10 +822,24 @@ document.getElementById('app').addEventListener('mousedown', (e) => {
   winDragLast = { x: e.screenX, y: e.screenY };
 });
 
+document.getElementById('mini-app').addEventListener('mousedown', (e) => {
+  winDragActive = true;
+  winDragLast = { x: e.screenX, y: e.screenY };
+  dragStartX = e.screenX;
+  dragStartY = e.screenY;
+  miniClickPrevented = false;
+});
+
 document.addEventListener('mousemove', (e) => {
   if (!winDragActive) return;
   const dx = e.screenX - winDragLast.x;
   const dy = e.screenY - winDragLast.y;
+  
+  const totalDist = Math.abs(e.screenX - dragStartX) + Math.abs(e.screenY - dragStartY);
+  if (totalDist > 4) {
+    miniClickPrevented = true;
+  }
+  
   winDragLast = { x: e.screenX, y: e.screenY };
   ipcRenderer.send('drag-move', { dx, dy });
 });
@@ -802,6 +865,7 @@ async function loadState() {
   if (s.totalSecs) {
     totalSecs = s.totalSecs;
     remainSecs = s.totalSecs;
+    userSetSecs = s.totalSecs;
   }
   updateDisplay();
 }
