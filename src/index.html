@@ -294,23 +294,24 @@
   /* ── MINI MODE ── */
   #mini-app {
     display: none;
-    width: 80px;
-    height: 80px;
+    width: 120px;
+    height: 50px;
     background: var(--mini-bg);
     border: 2px solid var(--accent2);
-    border-radius: 12px;
+    border-radius: 10px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 3px;
     cursor: pointer;
     box-shadow: 0 4px 16px var(--shadow);
     position: relative;
     overflow: hidden;
+    padding: 4px;
   }
 
   #mini-time {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--mini-text);
     letter-spacing: -1px;
     text-shadow: 0 1px 4px rgba(0,0,0,0.2);
@@ -324,8 +325,8 @@
   }
 
   #mini-bar-wrap {
-    width: 48px;
-    height: 5px;
+    width: 80px;
+    height: 4px;
     background: rgba(255,255,255,0.25);
     border-radius: 99px;
     overflow: hidden;
@@ -672,8 +673,8 @@ function setMiniMode(mini) {
   isMini = mini;
   document.getElementById('app').style.display = mini ? 'none' : 'flex';
   document.getElementById('mini-app').style.display = mini ? 'flex' : 'none';
-  document.body.style.width = mini ? '80px' : '280px';
-  document.body.style.height = mini ? '80px' : '420px';
+  document.body.style.width = mini ? '120px' : '280px';
+  document.body.style.height = mini ? '50px' : '420px';
   ipcRenderer.send('set-mini-mode', mini);
   if (mini && finished) startMiniFinish();
   if (!mini) { stopMiniFinish(); updateDisplay(); }

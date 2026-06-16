@@ -26,8 +26,8 @@ function saveSettings(data) {
 
 const FULL_WIDTH = 280;
 const FULL_HEIGHT = 420;
-const MINI_WIDTH = 80;
-const MINI_HEIGHT = 80;
+const MINI_WIDTH = 120;
+const MINI_HEIGHT = 50;
 
 function createWindow() {
   const settings = loadSettings();
