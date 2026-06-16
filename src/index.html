@@ -380,7 +380,7 @@
       <div id="time-text-wrap" style="cursor: pointer;" title="클릭해서 시간 입력">
         <span id="mm">25</span>:<span id="ss">00</span>
       </div>
-      <input id="time-direct-input" type="text" maxlength="3" placeholder="25" style="display:none; font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--text); background: transparent; border: none; outline: none; width: 90px; text-align: center; margin: 4px auto;">
+      <input id="time-direct-input" type="text" maxlength="6" placeholder="25:00" style="display:none; font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--text); background: transparent; border: none; outline: none; width: 100px; text-align: center; margin: 4px auto;">
       <small id="status-label">READY</small>
     </div>
   </div>
@@ -760,7 +760,11 @@ document.getElementById('time-text-wrap').addEventListener('click', (e) => {
   const input = document.getElementById('time-direct-input');
   wrap.style.display = 'none';
   input.style.display = 'block';
-  input.value = Math.floor(remainSecs / 60);
+  
+  const m = Math.floor(remainSecs / 60);
+  const s = remainSecs % 60;
+  input.value = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  
   input.focus();
   input.select();
 });
@@ -770,15 +774,28 @@ function finishDirectTimeInput() {
   const input = document.getElementById('time-direct-input');
   if (input.style.display === 'none') return;
   
-  let val = parseInt(input.value.trim(), 10);
-  if (isNaN(val)) {
-    val = Math.floor(remainSecs / 60);
-  }
-  const MAX = 120;
-  if (val > MAX) val = MAX;
-  if (val < 0) val = 0;
+  let valStr = input.value.trim();
+  let secs = 0;
   
-  remainSecs = val * 60;
+  if (valStr.includes(':')) {
+    const parts = valStr.split(':');
+    const m = parseInt(parts[0], 10) || 0;
+    const s = parseInt(parts[1], 10) || 0;
+    secs = (m * 60) + s;
+  } else {
+    const m = parseInt(valStr, 10);
+    if (isNaN(m)) {
+      secs = remainSecs;
+    } else {
+      secs = m * 60;
+    }
+  }
+  
+  const MAX = 120 * 60;
+  if (secs > MAX) secs = MAX;
+  if (secs < 0) secs = 0;
+  
+  remainSecs = secs;
   totalSecs = remainSecs;
   userSetSecs = remainSecs;
   
