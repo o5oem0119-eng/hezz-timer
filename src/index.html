@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yeonsi Timer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+
+  :root {
+    --bg: #fff0f5;
+    --border: #f9a8d4;
+    --accent: #f472b6;
+    --accent2: #ec4899;
+    --text: #831843;
+    --text2: #be185d;
+    --timer-fill: #f9a8d4;
+    --timer-track: #ffe4f0;
+    --btn-bg: #fce7f3;
+    --btn-border: #f9a8d4;
+    --shadow: rgba(244, 114, 182, 0.25);
+    --mini-bg: #f472b6;
+    --mini-text: #fff;
+  }
+
+  body {
+    background: transparent;
+    width: 280px;
+    height: 420px;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  /* ── FULL MODE ── */
+  #app {
+    width: 280px;
+    height: 420px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 16px 12px;
+    gap: 10px;
+    box-shadow: 0 8px 32px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.8);
+    position: relative;
+    image-rendering: pixelated;
+  }
+
+  /* drag area = whole app except interactive elements */
+  #app { cursor: move; }
+  #timer-ring, #goal-input, #btn-row, #name-row, .ctrl-btn, input { cursor: auto; }
+
+  /* ── NAME ROW ── */
+  #name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  #name-display {
+    font-size: 9px;
+    color: var(--accent2);
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    flex: 1;
+    padding: 3px 4px;
+    border: 1px dashed transparent;
+    border-radius: 4px;
+    transition: border-color .2s;
+  }
+  #name-display:hover { border-color: var(--accent); }
+
+  #name-input {
+    display: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 3px 5px;
+    width: 120px;
+    flex: 1;
+  }
+
+  #edit-btn {
+    font-size: 6px;
+    padding: 3px 6px;
+  }
+
+  /* ── TIMER RING ── */
+  #timer-ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    cursor: grab;
+    flex-shrink: 0;
+  }
+  #timer-ring:active { cursor: grabbing; }
+
+  #ring-svg {
+    width: 160px;
+    height: 160px;
+    transform: rotate(-90deg);
+  }
+
+  .ring-track { fill: none; stroke: var(--timer-track); stroke-width: 14; }
+  .ring-fill  { fill: none; stroke: var(--timer-fill); stroke-width: 14;
+                stroke-linecap: round;
+                transition: stroke-dashoffset 1s linear; }
+
+  #time-display {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -1px;
+    text-align: center;
+    line-height: 1;
+  }
+  #time-display small {
+    display: block;
+    font-size: 6px;
+    color: var(--text2);
+    margin-top: 5px;
+    letter-spacing: 1px;
+  }
+
+  /* finish flash */
+  @keyframes flash-ring {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .ring-flash .ring-fill { animation: flash-ring .5s ease-in-out infinite; }
+
+  /* ── GOAL INPUT ── */
+  #goal-wrap {
+    width: 100%;
+    position: relative;
+  }
+
+  #goal-input {
+    width: 100%;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    border-radius: 8px;
+    padding: 7px 8px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    transition: border-color .2s;
+    cursor: text;
+  }
+  #goal-input:focus { border-color: var(--accent2); }
+  #goal-input::placeholder { color: var(--text2); opacity: 0.5; }
+
+  /* ── PAUSE / STATUS ── */
+  #status-label {
+    font-size: 6px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── BUTTON ROW ── */
+  #btn-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    cursor: auto;
+  }
+
+  .ctrl-btn {
+    flex: 1;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: var(--text);
+    background: var(--btn-bg);
+    border: 1.5px solid var(--btn-border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    transition: background .15s, transform .1s, box-shadow .15s;
+    box-shadow: 0 2px 0 var(--btn-border);
+  }
+  .ctrl-btn:hover { background: var(--timer-track); }
+  .ctrl-btn:active { transform: translateY(2px); box-shadow: none; }
+
+  .ctrl-btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent2);
+    box-shadow: 0 2px 0 var(--accent2);
+  }
+  .ctrl-btn.primary:hover { background: var(--accent2); }
+
+  /* ── THEME PANEL ── */
+  #theme-panel {
+    display: none;
+    position: absolute;
+    bottom: 60px;
+    right: 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    gap: 6px;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+  #theme-panel.open { display: flex; }
+
+  .theme-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+  .theme-opt:hover { background: var(--timer-track); }
+  .theme-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(0,0,0,.15);
+  }
+  .theme-opt span {
+    font-size: 6px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+
+  /* ── FINISH POPUP ── */
+  #finish-popup {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    border-radius: 14px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 200;
+  }
+  #finish-popup.open { display: flex; }
+  #finish-popup .popup-box {
+    background: var(--bg);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  #finish-popup .popup-title {
+    font-size: 8px;
+    color: var(--accent2);
+    text-align: center;
+    line-height: 1.8;
+  }
+  #finish-popup .popup-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ── MINI MODE ── */
+  #mini-app {
+    display: none;
+    width: 80px;
+    height: 120px;
+    background: var(--mini-bg);
+    border: 2px solid var(--accent2);
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #mini-time {
+    font-size: 13px;
+    color: var(--mini-text);
+    letter-spacing: -1px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+
+  #mini-label {
+    font-size: 5px;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  #mini-bar-wrap {
+    width: 48px;
+    height: 5px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  #mini-bar {
+    height: 100%;
+    background: #fff;
+    border-radius: 99px;
+    transition: width 1s linear;
+  }
+
+  /* finish state for mini */
+  .mini-finish { animation: mini-flash .6s ease-in-out infinite; }
+  @keyframes mini-flash {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  #mini-emoji {
+    font-size: 13px;
+    display: none;
+    text-align: center;
+    line-height: 1;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── FULL MODE ── -->
+<div id="app">
+
+  <!-- name row -->
+  <div id="name-row">
+    <div id="name-display">🍅 hezz</div>
+    <input id="name-input" type="text" maxlength="16" placeholder="이름 입력">
+    <button class="ctrl-btn" id="edit-btn" style="flex:unset;padding:3px 7px;">EDIT</button>
+  </div>
+
+  <!-- timer ring -->
+  <div id="timer-ring">
+    <svg id="ring-svg" viewBox="0 0 160 160">
+      <circle class="ring-track" cx="80" cy="80" r="66"/>
+      <circle class="ring-fill" id="ring-fill" cx="80" cy="80" r="66"/>
+    </svg>
+    <div id="time-display">
+      <span id="mm">25</span>:<span id="ss">00</span>
+      <small id="status-label">READY</small>
+    </div>
+  </div>
+
+  <!-- goal -->
+  <div id="goal-wrap">
+    <textarea id="goal-input" rows="2" placeholder="이곳에 목표를 입력하세요."></textarea>
+  </div>
+
+  <!-- buttons -->
+  <div id="btn-row">
+    <button class="ctrl-btn primary" id="btn-start">START</button>
+    <button class="ctrl-btn" id="btn-pause" style="display:none;">PAUSE</button>
+    <button class="ctrl-btn" id="btn-rest">REST</button>
+    <button class="ctrl-btn" id="btn-mini">MINI</button>
+  </div>
+
+  <!-- theme panel -->
+  <div id="theme-panel">
+    <div class="theme-opt" data-theme="pink">
+      <div class="theme-dot" style="background:#f472b6;"></div>
+      <span>Pink</span>
+    </div>
+    <div class="theme-opt" data-theme="dark">
+      <div class="theme-dot" style="background:#374151;"></div>
+      <span>Dark</span>
+    </div>
+    <div class="theme-opt" data-theme="white">
+      <div class="theme-dot" style="background:#e5e7eb;"></div>
+      <span>White</span>
+    </div>
+    <div class="theme-opt" data-theme="blue">
+      <div class="theme-dot" style="background:#60a5fa;"></div>
+      <span>Blue</span>
+    </div>
+  </div>
+
+  <!-- finish popup -->
+  <div id="finish-popup">
+    <div class="popup-box">
+      <div class="popup-title">⏰ 시간 종료!<br>목표를 달성했나요?</div>
+      <div class="popup-btns">
+        <button class="ctrl-btn primary" id="btn-done">✓ 완료</button>
+        <button class="ctrl-btn" id="btn-addtime">+5분</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MINI MODE ── -->
+<div id="mini-app">
+  <div id="mini-emoji">⸜( ᐢ ᵕ ᐢ )⸝</div>
+  <div id="mini-time">25:00</div>
+  <div id="mini-label">FOCUS</div>
+  <div id="mini-bar-wrap"><div id="mini-bar" style="width:100%;"></div></div>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+
+// ── STATE ──
+let totalSecs = 25 * 60;
+let remainSecs = 25 * 60;
+let running = false;
+let resting = false;
+let finished = false;
+let interval = null;
+let isMini = false;
+let currentTheme = 'pink';
+let userName = 'hezz';
+let editingName = false;
+let dragStart = null;
+let dragOriginRemain = null;
+let miniEmojiIdx = 0;
+let miniEmojiInterval = null;
+const MINI_EMOJIS = ['⸜( ᐢ ᵕ ᐢ )⸝', '⸜(  ᐢ ᵕ ᐢ   )⸝'];
+
+// ── THEMES ──
+const THEMES = {
+  pink: {
+    '--bg':'#fff0f5','--border':'#f9a8d4','--accent':'#f472b6','--accent2':'#ec4899',
+    '--text':'#831843','--text2':'#be185d','--timer-fill':'#f9a8d4','--timer-track':'#ffe4f0',
+    '--btn-bg':'#fce7f3','--btn-border':'#f9a8d4','--shadow':'rgba(244,114,182,0.25)',
+    '--mini-bg':'#f472b6','--mini-text':'#fff'
+  },
+  dark: {
+    '--bg':'#1f2937','--border':'#374151','--accent':'#6b7280','--accent2':'#9ca3af',
+    '--text':'#f9fafb','--text2':'#d1d5db','--timer-fill':'#6b7280','--timer-track':'#374151',
+    '--btn-bg':'#374151','--btn-border':'#4b5563','--shadow':'rgba(0,0,0,0.4)',
+    '--mini-bg':'#374151','--mini-text':'#f9fafb'
+  },
+  white: {
+    '--bg':'#f9fafb','--border':'#e5e7eb','--accent':'#9ca3af','--accent2':'#6b7280',
+    '--text':'#111827','--text2':'#6b7280','--timer-fill':'#d1d5db','--timer-track':'#f3f4f6',
+    '--btn-bg':'#f3f4f6','--btn-border':'#e5e7eb','--shadow':'rgba(0,0,0,0.1)',
+    '--mini-bg':'#e5e7eb','--mini-text':'#374151'
+  },
+  blue: {
+    '--bg':'#eff6ff','--border':'#bfdbfe','--accent':'#60a5fa','--accent2':'#3b82f6',
+    '--text':'#1e3a8a','--text2':'#2563eb','--timer-fill':'#93c5fd','--timer-track':'#dbeafe',
+    '--btn-bg':'#dbeafe','--btn-border':'#bfdbfe','--shadow':'rgba(96,165,250,0.25)',
+    '--mini-bg':'#3b82f6','--mini-text':'#fff'
+  }
+};
+
+function applyTheme(name) {
+  currentTheme = name;
+  const t = THEMES[name];
+  const root = document.documentElement;
+  for (const [k, v] of Object.entries(t)) root.style.setProperty(k, v);
+  saveState();
+}
+
+// ── RING ──
+const CIRCUMFERENCE = 2 * Math.PI * 66;
+const ringFill = document.getElementById('ring-fill');
+ringFill.style.strokeDasharray = CIRCUMFERENCE;
+
+function updateRing() {
+  const ratio = totalSecs > 0 ? remainSecs / totalSecs : 0;
+  ringFill.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
+}
+
+function updateDisplay() {
+  const m = Math.floor(remainSecs / 60);
+  const s = remainSecs % 60;
+  document.getElementById('mm').textContent = String(m).padStart(2,'0');
+  document.getElementById('ss').textContent = String(s).padStart(2,'0');
+  document.getElementById('mini-time').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+
+  const miniBar = document.getElementById('mini-bar');
+  const ratio = totalSecs > 0 ? remainSecs / totalSecs : 0;
+  miniBar.style.width = (ratio * 100) + '%';
+
+  updateRing();
+
+  const lbl = resting ? 'REST' : (running ? 'FOCUS' : (finished ? 'DONE!' : 'READY'));
+  document.getElementById('status-label').textContent = lbl;
+  document.getElementById('mini-label').textContent = lbl;
+}
+
+// ── TIMER LOGIC ──
+function startTimer() {
+  if (finished) return;
+  if (remainSecs <= 0) return;
+  running = true; resting = false;
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-pause').style.display = '';
+  document.getElementById('status-label').textContent = 'FOCUS';
+  clearInterval(interval);
+  interval = setInterval(() => {
+    if (remainSecs > 0) {
+      remainSecs--;
+      updateDisplay();
+    }
+    if (remainSecs <= 0) {
+      clearInterval(interval);
+      running = false;
+      finished = true;
+      onFinish();
+    }
+  }, 1000);
+  updateDisplay();
+}
+
+function pauseTimer() {
+  running = false;
+  clearInterval(interval);
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('status-label').textContent = 'PAUSED';
+  document.getElementById('mini-label').textContent = 'PAUSED';
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  running = false; finished = false; resting = false;
+  remainSecs = totalSecs;
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('ring-svg').classList.remove('ring-flash');
+  stopMiniFinish();
+  updateDisplay();
+}
+
+function onFinish() {
+  document.getElementById('ring-svg').classList.add('ring-flash');
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  if (!isMini) {
+    document.getElementById('finish-popup').classList.add('open');
+  } else {
+    startMiniFinish();
+  }
+}
+
+function startMiniFinish() {
+  const emojiEl = document.getElementById('mini-emoji');
+  const timeEl = document.getElementById('mini-time');
+  const barWrap = document.getElementById('mini-bar-wrap');
+  const lbl = document.getElementById('mini-label');
+  emojiEl.style.display = 'block';
+  timeEl.style.display = 'none';
+  barWrap.style.display = 'none';
+  lbl.style.display = 'none';
+  document.getElementById('mini-app').classList.add('mini-finish');
+  miniEmojiIdx = 0;
+  emojiEl.textContent = MINI_EMOJIS[0];
+  miniEmojiInterval = setInterval(() => {
+    miniEmojiIdx = (miniEmojiIdx + 1) % MINI_EMOJIS.length;
+    emojiEl.textContent = MINI_EMOJIS[miniEmojiIdx];
+  }, 600);
+}
+
+function stopMiniFinish() {
+  clearInterval(miniEmojiInterval);
+  const emojiEl = document.getElementById('mini-emoji');
+  emojiEl.style.display = 'none';
+  document.getElementById('mini-time').style.display = '';
+  document.getElementById('mini-bar-wrap').style.display = '';
+  document.getElementById('mini-label').style.display = '';
+  document.getElementById('mini-app').classList.remove('mini-finish');
+}
+
+// ── BUTTONS ──
+document.getElementById('btn-start').addEventListener('click', startTimer);
+document.getElementById('btn-pause').addEventListener('click', pauseTimer);
+
+document.getElementById('btn-rest').addEventListener('click', () => {
+  if (!resting) {
+    resting = true;
+    clearInterval(interval);
+    running = false;
+    document.getElementById('status-label').textContent = 'REST';
+    document.getElementById('btn-start').style.display = '';
+    document.getElementById('btn-pause').style.display = 'none';
+  } else {
+    resting = false;
+    startTimer();
+  }
+  document.getElementById('btn-rest').textContent = resting ? 'RESUME' : 'REST';
+});
+
+document.getElementById('btn-mini').addEventListener('click', () => setMiniMode(true));
+
+// finish popup
+document.getElementById('btn-done').addEventListener('click', () => {
+  document.getElementById('finish-popup').classList.remove('open');
+  document.getElementById('ring-svg').classList.remove('ring-flash');
+  resetTimer();
+});
+document.getElementById('btn-addtime').addEventListener('click', () => {
+  document.getElementById('finish-popup').classList.remove('open');
+  document.getElementById('ring-svg').classList.remove('ring-flash');
+  finished = false;
+  remainSecs = 5 * 60;
+  totalSecs = Math.max(totalSecs, remainSecs);
+  updateDisplay();
+  startTimer();
+});
+
+// ── MINI MODE ──
+function setMiniMode(mini) {
+  isMini = mini;
+  document.getElementById('app').style.display = mini ? 'none' : 'flex';
+  document.getElementById('mini-app').style.display = mini ? 'flex' : 'none';
+  document.body.style.width = mini ? '80px' : '280px';
+  document.body.style.height = mini ? '120px' : '420px';
+  ipcRenderer.send('set-mini-mode', mini);
+  if (mini && finished) startMiniFinish();
+  if (!mini) { stopMiniFinish(); updateDisplay(); }
+  saveState();
+}
+
+document.getElementById('mini-app').addEventListener('click', () => {
+  stopMiniFinish();
+  setMiniMode(false);
+  if (finished) {
+    document.getElementById('finish-popup').classList.add('open');
+    document.getElementById('ring-svg').classList.add('ring-flash');
+  }
+});
+
+// ── RING DRAG to set time ──
+let isDragging = false;
+let dragLocked = false;
+
+function angleFromEvent(e, rect) {
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+  if (angle < 0) angle += 360;
+  return angle;
+}
+
+document.getElementById('timer-ring').addEventListener('mousedown', (e) => {
+  if (running) return;
+  isDragging = true;
+  dragLocked = false;
+  dragStart = angleFromEvent(e, e.currentTarget.getBoundingClientRect());
+  dragOriginRemain = remainSecs;
+  e.stopPropagation();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging || dragLocked) return;
+  const ring = document.getElementById('timer-ring');
+  const angle = angleFromEvent(e, ring.getBoundingClientRect());
+  let delta = angle - dragStart;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  const MAX = 120 * 60;
+  let newSecs = Math.round(dragOriginRemain + delta / 360 * MAX);
+  if (newSecs >= MAX) { newSecs = MAX; dragLocked = true; }
+  if (newSecs < 0) newSecs = 0;
+  remainSecs = newSecs;
+  totalSecs = newSecs;
+  updateDisplay();
+});
+
+document.addEventListener('mouseup', () => {
+  if (isDragging) { isDragging = false; dragLocked = false; }
+});
+
+document.getElementById('timer-ring').addEventListener('wheel', (e) => {
+  if (running) return;
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 60 : -60;
+  const MAX = 120 * 60;
+  remainSecs = Math.max(0, Math.min(MAX, remainSecs + delta));
+  totalSecs = remainSecs;
+  updateDisplay();
+}, { passive: false });
+
+// ── THEME ──
+document.getElementById('edit-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('theme-panel').classList.toggle('open');
+});
+
+document.querySelectorAll('.theme-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    applyTheme(opt.dataset.theme);
+    document.getElementById('theme-panel').classList.remove('open');
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#theme-panel') && !e.target.closest('#edit-btn')) {
+    document.getElementById('theme-panel').classList.remove('open');
+  }
+});
+
+// ── NAME EDITING ──
+document.getElementById('name-display').addEventListener('click', (e) => {
+  e.stopPropagation();
+  startNameEdit();
+});
+
+function startNameEdit() {
+  editingName = true;
+  const disp = document.getElementById('name-display');
+  const inp = document.getElementById('name-input');
+  disp.style.display = 'none';
+  inp.style.display = 'block';
+  inp.value = userName;
+  inp.focus();
+  inp.select();
+}
+
+function finishNameEdit() {
+  if (!editingName) return;
+  editingName = false;
+  const inp = document.getElementById('name-input');
+  const disp = document.getElementById('name-display');
+  const val = inp.value.trim();
+  if (val) userName = val;
+  disp.textContent = '🍅 ' + userName;
+  inp.style.display = 'none';
+  disp.style.display = '';
+  saveState();
+}
+
+document.getElementById('name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') finishNameEdit();
+  if (e.key === 'Escape') {
+    editingName = false;
+    document.getElementById('name-input').style.display = 'none';
+    document.getElementById('name-display').style.display = '';
+  }
+  e.stopPropagation();
+});
+document.getElementById('name-input').addEventListener('blur', finishNameEdit);
+
+// ── DRAG WINDOW ──
+let winDragActive = false;
+let winDragLast = null;
+
+document.getElementById('app').addEventListener('mousedown', (e) => {
+  // Only drag on app background, not on interactive elements
+  const skip = ['INPUT','TEXTAREA','BUTTON','svg','circle'];
+  if (skip.includes(e.target.tagName)) return;
+  if (e.target.closest('#timer-ring,#btn-row,#goal-wrap,#name-input,#theme-panel,#finish-popup')) return;
+  winDragActive = true;
+  winDragLast = { x: e.screenX, y: e.screenY };
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!winDragActive) return;
+  const dx = e.screenX - winDragLast.x;
+  const dy = e.screenY - winDragLast.y;
+  winDragLast = { x: e.screenX, y: e.screenY };
+  ipcRenderer.send('drag-move', { dx, dy });
+});
+
+document.addEventListener('mouseup', () => { winDragActive = false; });
+
+// ── PERSIST ──
+function saveState() {
+  ipcRenderer.send('save-settings', {
+    theme: currentTheme,
+    userName,
+    totalSecs,
+  });
+}
+
+async function loadState() {
+  const s = await ipcRenderer.invoke('load-settings');
+  if (s.theme) applyTheme(s.theme);
+  if (s.userName) {
+    userName = s.userName;
+    document.getElementById('name-display').textContent = '🍅 ' + userName;
+  }
+  if (s.totalSecs) {
+    totalSecs = s.totalSecs;
+    remainSecs = s.totalSecs;
+  }
+  updateDisplay();
+}
+
+loadState();
+</script>
+</body>
+</html>

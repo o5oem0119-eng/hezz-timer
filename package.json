@@ -1,0 +1,33 @@
+{
+  "name": "hezz-timer",
+  "version": "1.0.0",
+  "description": "귀여운 뽀모도로 타이머 위젯",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.hezz.timer",
+    "productName": "Hezz Timer",
+    "win": {
+      "target": "nsis",
+      "icon": "src/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ]
+  }
+}
