@@ -291,8 +291,25 @@
   #finish-popup .ctrl-btn {
     font-family: 'Galmuri11', monospace;
     font-size: 9px;
-    padding: 6px 2px;
+    padding: 0 2px;
     white-space: nowrap;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  #btn-addtime {
+    border-color: var(--accent) !important;
+    box-shadow: 0 2px 0 var(--accent) !important;
+    background: #ffffff;
+  }
+  #btn-addtime:hover {
+    background: var(--btn-bg) !important;
+  }
+  #btn-addtime:active {
+    transform: translateY(2px) !important;
+    box-shadow: none !important;
   }
   #popup-emoji-dance {
     font-size: 24px;
