@@ -164,6 +164,13 @@ ipcMain.on('drag-move', (event, { dx, dy }) => {
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: app.getPath('exe')
+    });
+  } catch (e) {}
 });
 
 app.on('window-all-closed', (e) => {
