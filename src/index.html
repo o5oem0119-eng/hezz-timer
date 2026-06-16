@@ -6,6 +6,12 @@
 <title>Yeonsi Timer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @font-face {
+    font-family: 'Galmuri11';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/Galmuri11.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
 
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
@@ -30,7 +36,7 @@
     width: 280px;
     height: 420px;
     overflow: hidden;
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Galmuri11', 'Press Start 2P', monospace;
   }
 
   /* ── FULL MODE ── */
@@ -63,7 +69,7 @@
   }
 
   #name-display {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--accent2);
     cursor: pointer;
     letter-spacing: 1px;
@@ -78,8 +84,8 @@
 
   #name-input {
     display: none;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
+    font-family: 'Galmuri11', 'Press Start 2P', monospace;
+    font-size: 11px;
     color: var(--text);
     background: var(--btn-bg);
     border: 1px solid var(--accent);
@@ -90,7 +96,7 @@
   }
 
   #edit-btn {
-    font-size: 6px;
+    font-size: 10px;
     padding: 3px 6px;
   }
 
@@ -131,7 +137,7 @@
   }
   #time-display small {
     display: block;
-    font-size: 6px;
+    font-size: 9px;
     color: var(--text2);
     margin-top: 5px;
     letter-spacing: 1px;
@@ -152,8 +158,8 @@
 
   #goal-input {
     width: 100%;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-family: 'Galmuri11', 'Press Start 2P', monospace;
+    font-size: 10px;
     color: var(--text);
     background: var(--btn-bg);
     border: 1px solid var(--btn-border);
@@ -170,7 +176,7 @@
 
   /* ── PAUSE / STATUS ── */
   #status-label {
-    font-size: 6px;
+    font-size: 9px;
     color: var(--text2);
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -186,13 +192,13 @@
 
   .ctrl-btn {
     flex: 1;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 6px;
+    font-family: 'Galmuri11', 'Press Start 2P', monospace;
+    font-size: 10px;
     color: var(--text);
     background: var(--btn-bg);
     border: 1.5px solid var(--btn-border);
     border-radius: 8px;
-    padding: 8px 4px;
+    padding: 7px 4px;
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: .5px;
@@ -243,7 +249,7 @@
     border: 1.5px solid rgba(0,0,0,.15);
   }
   .theme-opt span {
-    font-size: 6px;
+    font-size: 9px;
     color: var(--text);
     text-transform: uppercase;
     letter-spacing: .5px;
@@ -274,7 +280,7 @@
     gap: 12px;
   }
   #finish-popup .popup-title {
-    font-size: 8px;
+    font-size: 12px;
     color: var(--accent2);
     text-align: center;
     line-height: 1.8;
@@ -322,7 +328,7 @@
   }
 
   #mini-label {
-    font-size: 5px;
+    font-size: 9px;
     color: rgba(255,255,255,0.8);
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -380,7 +386,7 @@
       <div id="time-text-wrap" style="cursor: pointer;" title="클릭해서 시간 입력">
         <span id="mm">25</span>:<span id="ss">00</span>
       </div>
-      <input id="time-direct-input" type="text" maxlength="6" placeholder="25:00" style="display:none; font-family: 'Press Start 2P', monospace; font-size: 16px; color: var(--text); background: transparent; border: none; outline: none; width: 100px; text-align: center; margin: 4px auto;">
+      <input id="time-direct-input" type="text" maxlength="6" placeholder="25:00" style="display:none; font-family: 'Galmuri11', 'Press Start 2P', monospace; font-size: 16px; color: var(--text); background: transparent; border: none; outline: none; width: 100px; text-align: center; margin: 4px auto;">
       <small id="status-label">READY</small>
     </div>
   </div>
