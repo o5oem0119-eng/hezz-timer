@@ -497,6 +497,8 @@ const MINI_EMOJIS = ['⸜( ᐢ ᵕ ᐢ )⸝', '⸜(  ᐢ ᵕ ᐢ   )⸝'];
 let popupEmojiIdx = 0;
 let popupEmojiInterval = null;
 const POPUP_EMOJIS = ['⸜( ᐢ ᵕ ᐢ )⸝', '\\( ᐢ ᵕ ᐢ )/'];
+let alarmSoundCount = 0;
+let alarmSoundTimer = null;
 
 // ── THEMES ──
 const THEMES = {
@@ -606,6 +608,7 @@ function resetTimer() {
   document.getElementById('ring-svg').classList.remove('ring-flash');
   stopMiniFinish();
   stopPopupFinish();
+  stopAlarmSound();
   updateDisplay();
 }
 
@@ -632,8 +635,30 @@ function playAlarmSound() {
   }
 }
 
-function onFinish() {
+function startAlarmSound() {
+  stopAlarmSound();
   playAlarmSound();
+  alarmSoundCount = 1;
+  alarmSoundTimer = setInterval(() => {
+    if (alarmSoundCount < 3) {
+      playAlarmSound();
+      alarmSoundCount++;
+    } else {
+      stopAlarmSound();
+    }
+  }, 3000);
+}
+
+function stopAlarmSound() {
+  if (alarmSoundTimer) {
+    clearInterval(alarmSoundTimer);
+    alarmSoundTimer = null;
+  }
+  alarmSoundCount = 0;
+}
+
+function onFinish() {
+  startAlarmSound();
   document.getElementById('ring-svg').classList.add('ring-flash');
   document.getElementById('btn-start').style.display = '';
   document.getElementById('btn-pause').style.display = 'none';
@@ -894,6 +919,7 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('#theme-panel') && !e.target.closest('#edit-btn')) {
     document.getElementById('theme-panel').classList.remove('open');
   }
+  stopAlarmSound();
 });
 
 // ── NAME EDITING ──
