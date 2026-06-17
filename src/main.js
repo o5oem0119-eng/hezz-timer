@@ -161,16 +161,24 @@ ipcMain.on('drag-move', (event, { dx, dy }) => {
   }
 });
 
+function enableAutoStart() {
+  try {
+    if (!app.isPackaged) return;
+    const { shell } = require('electron');
+    const startupFolder = path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
+    const lnkPath = path.join(startupFolder, 'Hezz Timer.lnk');
+    shell.writeShortcutLink(lnkPath, 'create', {
+      target: app.getPath('exe'),
+      cwd: path.dirname(app.getPath('exe')),
+      description: 'Hezz Timer 🍅'
+    });
+  } catch (e) {}
+}
+
 app.whenReady().then(() => {
   createWindow();
   createTray();
-  
-  try {
-    app.setLoginItemSettings({
-      openAtLogin: true,
-      path: app.getPath('exe')
-    });
-  } catch (e) {}
+  enableAutoStart();
 });
 
 app.on('window-all-closed', (e) => {
