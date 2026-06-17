@@ -609,7 +609,31 @@ function resetTimer() {
   updateDisplay();
 }
 
+function playAlarmSound() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (freq, startTime, duration) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gainNode.gain.setValueAtTime(0.2, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const now = audioCtx.currentTime;
+    playTone(523.25, now, 0.4);
+    playTone(659.25, now + 0.25, 0.6);
+  } catch (e) {
+    console.error('Failed to play audio alert:', e);
+  }
+}
+
 function onFinish() {
+  playAlarmSound();
   document.getElementById('ring-svg').classList.add('ring-flash');
   document.getElementById('btn-start').style.display = '';
   document.getElementById('btn-pause').style.display = 'none';
